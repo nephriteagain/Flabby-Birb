@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-defineProps<{ score: number; best:number}>();
+defineProps<{ score: number; best:number }>();
 
 const emit = defineEmits(["handleRestart"])
 </script>
