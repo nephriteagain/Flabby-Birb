@@ -9,7 +9,7 @@ document.title = "Flabby Birb"
 
 const pipePos = ref<{x: number; topY: number; bottomY:number; id: number}[]>([{x: 1_100, topY: 350, bottomY: 200, id: 0 }])
 const birbPos = ref(280)
-const speed = ref(3)
+const speed = ref(5)
 const isFalling = ref(false)
 const isJumping = ref(false)
 const initialJumpPosition = ref(birbPos.value)
@@ -51,6 +51,7 @@ function jumpBirb(timestamp:number) {
   if (gameOver.value) return;
   if (birbPos.value > initialJumpPosition.value - 80) {
     birbPos.value -= 7
+
     isJumping.value = true
     isFalling.value = false
     requestAnimationFrame(jumpBirb)
@@ -195,11 +196,13 @@ watch([gameOver, gameStart], () => {
 }, {immediate: true})
 
 
+const grassArr = Array.from({length: 68})
+
 </script>
 
 <template>
-  <div class="w-screen h-screen flex items-center justify-center">
-    <div class="relative w-[1000px] h-[600px] bg-gray-200 overflow-hidden">
+  <div class="w-screen h-screen flex flex-col items-center justify-center">
+    <div class="relative w-[1000px] h-[600px] bg-blue-200 overflow-hidden">
       <Score v-if="!gameOver" :score=score />
       <Pipe 
         v-for="(pipe, index) in pipePos" 
@@ -209,9 +212,27 @@ watch([gameOver, gameStart], () => {
         :bottomY="pipe.bottomY" 
         :id="pipe.id"
       />
-      <Birb :x=BIRBX :y=birbPos :size=SIZE />
+      <Birb 
+      :x=BIRBX 
+      :y=birbPos 
+      :size=SIZE 
+      :jump=isJumping
+      :start=gameStart
+      :end=gameOver
+      />
       <GameOver v-if="gameOver" @handleRestart="restartGame" :score="score" :best="best" />
     </div>    
+    <div class="w-[1000px] overflow-hidden">
+      <div class="w-full flex flex-row h-6 " :id="gameStart ?'grass' : ''">
+        <div class="w-[2000px] flex flex-row bg-brown">
+          <template v-for="(item, index) in grassArr" :key="index">
+            <div class="w-4 max-w-4 h-10 bg-green-600 rotate-12 -translate-y-2 -translate-x-1"></div>
+            <div class="w-4 max-w-4 h-10 bg-green-500 rotate-12 -translate-y-2 -translate-x-1"></div>
+          </template>
+        </div>
+      </div>
+      <div class="w-full h-16 bg-[#964B00]"></div>
+    </div>
   </div>
 </template>
 
@@ -228,4 +249,15 @@ watch([gameOver, gameStart], () => {
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
+
+#grass {
+  animation: grass 6s linear infinite;
+}
+
+@keyframes grass {
+  from {transform: translateX(0%);}
+  to {transform: translateX(-100%)}
+}
 </style>
+
+
