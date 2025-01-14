@@ -7,7 +7,7 @@ import Score from "./components/Score.vue"
 
 document.title = "Flabby Birb"
 
-const pipePos = ref<{x: number; topY: number; bottomY:number; id: number}[]>([{x: 1_100, topY: 350, bottomY: 200, id: 0 }])
+const pipePos = ref<{x: number; topY: number; bottomY:number; id: number; scored?: boolean}[]>([{x: 1_100, topY: 350, bottomY: 200, id: 0 }])
 const birbPos = ref(280)
 const speed = ref(5)
 const isFalling = ref(false)
@@ -36,7 +36,7 @@ function generateNewPipe() {
   pipePos.value = [...pipePos.value, newPipe]
 }
 
-function movePipeLeftwards(timestamp:number) {
+function movePipeLeftwards() {
   if (gameOver.value) return
     for (const pipe of pipePos.value) {
       if (pipe.x > -100) {
@@ -47,7 +47,7 @@ function movePipeLeftwards(timestamp:number) {
 }
 
 
-function jumpBirb(timestamp:number) {
+function jumpBirb() {
   if (gameOver.value) return;
   if (birbPos.value > initialJumpPosition.value - 80) {
     birbPos.value -= 7
@@ -61,7 +61,7 @@ function jumpBirb(timestamp:number) {
   }
 }
 
-function fall(timestamp:number) {
+function fall() {
   if (!isFalling.value) {
     return;
   }
@@ -73,7 +73,7 @@ function fall(timestamp:number) {
   }
 }
 
-function checkCollision(timestamp: number) {
+function checkCollision() {
   if (gameOver.value) return;
   if (birbPos.value > 600) {
     gameOver.value = true
@@ -104,7 +104,7 @@ function checkCollision(timestamp: number) {
       console.log("Game Over!");
       if (score.value > best.value) {
         best.value = score.value;
-        localStorage.setItem("best", score.value)
+        localStorage.setItem("best", score.value.toString())
       }
       return;
     }
@@ -125,7 +125,7 @@ function restartGame() {
   score.value = 0;
 }
 
-function incrementScore(timestamp: number) {
+function incrementScore() {
   if (gameOver.value) return;
 
 
@@ -133,7 +133,6 @@ function incrementScore(timestamp: number) {
 
   for (const pipe of pipePos.value) {
     const topPipePos = document.getElementById(`top-pipe-${pipe.id}`)!.getBoundingClientRect();
-    const botPipePos = document.getElementById(`bot-pipe-${pipe.id}`)!.getBoundingClientRect();
 
     // Check if the pipe has passed completely (right of pipe is less than the left of bird)
     const didScore = topPipePos.right < birb.left;
@@ -225,7 +224,7 @@ const grassArr = Array.from({length: 68})
     <div class="w-[1000px] overflow-hidden">
       <div class="w-full flex flex-row h-6 " :id="gameStart ?'grass' : ''">
         <div class="w-[2000px] flex flex-row bg-brown">
-          <template v-for="(item, index) in grassArr" :key="index">
+          <template v-for="(, index) in grassArr" :key="index">
             <div class="w-4 max-w-4 h-10 bg-green-600 rotate-12 -translate-y-2 -translate-x-1"></div>
             <div class="w-4 max-w-4 h-10 bg-green-500 rotate-12 -translate-y-2 -translate-x-1"></div>
           </template>

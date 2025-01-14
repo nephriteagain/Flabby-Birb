@@ -1,6 +1,5 @@
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
 defineProps<{ 
   x: number; 
   y: number; 
