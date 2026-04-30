@@ -34,7 +34,8 @@ defineProps<{
   >
   <!-- eyes -->
   <div class="absolute right-0 w-5 h-5 rounded-full bg-white border border-black flex items-center justify-center">
-    <div class="w-1 h-1 bg-black rounded-full translate-x-1"></div>
+    <span v-if="end" class="text-[10px] font-bold leading-none translate-x-1">✕</span>
+    <div v-else class="w-1 h-1 bg-black rounded-full translate-x-1"></div>
   </div>
   <!-- eyes -->
    <!-- beak -->

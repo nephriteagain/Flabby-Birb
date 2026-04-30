@@ -4,12 +4,13 @@ import Pipe from './components/Pipe.vue';
 import Birb from './components/Birb.vue';
 import GameOver from './components/GameOver.vue';
 import Score from "./components/Score.vue"
+import { BIRB_X, BIRB_SIZE, PIPE_SPEED, GRASS_BLADE_COUNT } from './constants'
 
 document.title = "Flabby Birb"
 
 const pipePos = ref<{x: number; topY: number; bottomY:number; id: number; scored?: boolean}[]>([{x: 1_100, topY: 350, bottomY: 200, id: 0 }])
 const birbPos = ref(280)
-const speed = ref(5)
+const speed = ref(PIPE_SPEED)
 const isFalling = ref(false)
 const isJumping = ref(false)
 const initialJumpPosition = ref(birbPos.value)
@@ -17,13 +18,16 @@ const gameOver = ref(false)
 const score = ref(0)
 const best = ref(Number(localStorage.getItem("best")) ?? 0)
 const gameStart = ref(false)
+const godModeEnabled = ref(false)
 
-const BIRBX = 200
-const SIZE = 40
 
 let lastPipeTime = 0
 let lastJumpTime = 0
 let lastFallTime = 0
+
+function getDelta(timestamp: number, lastTime: number): number {
+  return lastTime ? (timestamp - lastTime) / (1000 / 60) : 1
+}
 
 
 function generateNewPipe() {
@@ -42,7 +46,7 @@ function generateNewPipe() {
 
 function movePipeLeftwards(timestamp: number) {
   if (gameOver.value) return
-  const delta = lastPipeTime ? (timestamp - lastPipeTime) / (1000 / 60) : 1
+  const delta = getDelta(timestamp, lastPipeTime)
   lastPipeTime = timestamp
   for (const pipe of pipePos.value) {
     if (pipe.x > -100) {
@@ -55,10 +59,10 @@ function movePipeLeftwards(timestamp: number) {
 
 function jumpBirb(timestamp: number) {
   if (gameOver.value) return;
-  const delta = lastJumpTime ? (timestamp - lastJumpTime) / (1000 / 60) : 1
+  const delta = getDelta(timestamp, lastJumpTime)
   lastJumpTime = timestamp
-  if (birbPos.value > initialJumpPosition.value - 80 && birbPos.value > 0) {
-    birbPos.value = Math.max(0, birbPos.value - 7 * delta)
+  if (birbPos.value > initialJumpPosition.value - 96 && birbPos.value > 0) {
+    birbPos.value = Math.max(0, birbPos.value - 5.6 * delta)
     isJumping.value = true
     isFalling.value = false
     requestAnimationFrame(jumpBirb)
@@ -74,20 +78,22 @@ function fall(timestamp: number) {
     lastFallTime = 0
     return;
   }
-  const delta = lastFallTime ? (timestamp - lastFallTime) / (1000 / 60) : 1
+  const delta = getDelta(timestamp, lastFallTime)
   lastFallTime = timestamp
   if (!isJumping.value) {
-    birbPos.value += 7 * delta
+    birbPos.value = Math.min(600 - BIRB_SIZE, birbPos.value + 7.7 * delta)
   }
-  if (birbPos.value < 640) {
+  if (birbPos.value < 600 - BIRB_SIZE) {
     requestAnimationFrame(fall)
   }
 }
 
 function checkCollision() {
+  if (godModeEnabled.value) return
   if (gameOver.value) return;
-  if (birbPos.value > 600) {
+  if (birbPos.value >= 600 - BIRB_SIZE) {
     gameOver.value = true
+    gameStart.value = false
   }
   const birb = document.getElementById("birb")!.getBoundingClientRect();
   for (const pipe of pipePos.value) {
@@ -176,6 +182,7 @@ onMounted(()=> {
 })
 
 onMounted(() => {
+  let keyBuffer = ""
   document.addEventListener("keypress", e => {
     if (e.key === " ") {
       if (gameOver.value) {
@@ -186,6 +193,22 @@ onMounted(() => {
       isFalling.value = true
       initialJumpPosition.value = birbPos.value
       requestAnimationFrame(jumpBirb)
+    }
+
+    keyBuffer = (keyBuffer + e.key).slice(-10)
+    if (keyBuffer.endsWith("godmodeon")) {
+      godModeEnabled.value = true
+      alert("God mode is enabled, type godmodeoff to disable")
+      keyBuffer=""
+    } else if (keyBuffer.endsWith("godmodeoff")) {
+      godModeEnabled.value = false
+      if (score.value > best.value) {
+        best.value = score.value
+        localStorage.setItem("best", score.value.toString())
+      }
+      gameOver.value = true
+      gameStart.value = false
+      keyBuffer=""
     }
   })
 })
@@ -209,7 +232,7 @@ watch([gameOver, gameStart], () => {
 }, {immediate: true})
 
 
-const grassArr = Array.from({length: 68})
+const grassArr = Array.from({length: GRASS_BLADE_COUNT})
 
 </script>
 
@@ -226,9 +249,9 @@ const grassArr = Array.from({length: 68})
         :id="pipe.id"
       />
       <Birb 
-      :x=BIRBX 
-      :y=birbPos 
-      :size=SIZE 
+      :x=BIRB_X
+      :y=birbPos
+      :size=BIRB_SIZE
       :jump=isJumping
       :start=gameStart
       :end=gameOver
@@ -264,7 +287,7 @@ const grassArr = Array.from({length: 68})
 }
 
 #grass {
-  animation: grass 6s linear infinite;
+  animation: grass 3.33s linear infinite;
 }
 
 @keyframes grass {
