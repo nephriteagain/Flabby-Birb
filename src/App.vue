@@ -21,6 +21,10 @@ const gameStart = ref(false)
 const BIRBX = 200
 const SIZE = 40
 
+let lastPipeTime = 0
+let lastJumpTime = 0
+let lastFallTime = 0
+
 
 function generateNewPipe() {
   if (gameOver.value) return
@@ -36,37 +40,44 @@ function generateNewPipe() {
   pipePos.value = [...pipePos.value, newPipe]
 }
 
-function movePipeLeftwards() {
+function movePipeLeftwards(timestamp: number) {
   if (gameOver.value) return
-    for (const pipe of pipePos.value) {
-      if (pipe.x > -100) {
-        pipe.x -= speed.value
-      }
+  const delta = lastPipeTime ? (timestamp - lastPipeTime) / (1000 / 60) : 1
+  lastPipeTime = timestamp
+  for (const pipe of pipePos.value) {
+    if (pipe.x > -100) {
+      pipe.x -= speed.value * delta
     }
-    requestAnimationFrame(movePipeLeftwards)
+  }
+  requestAnimationFrame(movePipeLeftwards)
 }
 
 
-function jumpBirb() {
+function jumpBirb(timestamp: number) {
   if (gameOver.value) return;
-  if (birbPos.value > initialJumpPosition.value - 80) {
-    birbPos.value -= 7
-
+  const delta = lastJumpTime ? (timestamp - lastJumpTime) / (1000 / 60) : 1
+  lastJumpTime = timestamp
+  if (birbPos.value > initialJumpPosition.value - 80 && birbPos.value > 0) {
+    birbPos.value = Math.max(0, birbPos.value - 7 * delta)
     isJumping.value = true
     isFalling.value = false
     requestAnimationFrame(jumpBirb)
   } else {
+    lastJumpTime = 0
     isJumping.value = false
     isFalling.value = true
   }
 }
 
-function fall() {
+function fall(timestamp: number) {
   if (!isFalling.value) {
+    lastFallTime = 0
     return;
   }
+  const delta = lastFallTime ? (timestamp - lastFallTime) / (1000 / 60) : 1
+  lastFallTime = timestamp
   if (!isJumping.value) {
-    birbPos.value += 7
+    birbPos.value += 7 * delta
   }
   if (birbPos.value < 640) {
     requestAnimationFrame(fall)
@@ -123,6 +134,9 @@ function restartGame() {
   initialJumpPosition.value = birbPos.value;
   gameOver.value = false;
   score.value = 0;
+  lastPipeTime = 0;
+  lastJumpTime = 0;
+  lastFallTime = 0;
 }
 
 function incrementScore() {
